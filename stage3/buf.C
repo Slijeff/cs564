@@ -67,8 +67,70 @@ BufMgr::~BufMgr()
     delete[] bufPool;
 }
 
+/**
+ * @brief  Finds a free frame using the clock algorithm
+ * @author Jeffrey
+ * @note
+ * @param  &frame: the frame to return
+ * @retval BUFFEREXCEEDED if all buffer frames are pinned, UNIXERR if the call to the I/O layer returned an error when a dirty page was being written to disk and OK otherwise.
+ */
 const Status BufMgr::allocBuf(int &frame)
 {
+    // Track the amount of time that clock goes through
+    int loop = 0;
+    int initialHand = clockHand;
+
+    while (loop < 2)
+    {
+        advanceClock();
+        if (initialHand == clockHand)
+        {
+            loop++;
+        }
+        BufDesc *tempBuf = &(bufTable[clockHand]);
+        // If not valid
+        if (!tempBuf->valid)
+        {
+            frame = clockHand;
+            return OK;
+        }
+        else
+        {
+            // If reference bit set
+            if (tempBuf->refbit)
+            {
+                tempBuf->refbit = false;
+                // continue to next frame
+                continue;
+            }
+            else
+            {
+                // If page is pinned, continue
+                if (tempBuf->pinCnt >= 1)
+                    continue;
+                else
+                {
+                    // If Dirty bit set, flush to disk
+                    // Remove from hash table done by flushFile()
+                    if (tempBuf->dirty)
+                    {
+                        if (flushFile(tempBuf->file) != OK)
+                            return UNIXERR;
+                        frame = clockHand;
+                        return OK;
+                    }
+                    else
+                    {
+                        frame = clockHand;
+                        return OK;
+                    }
+                }
+            }
+        }
+    }
+
+    // If after loop no return, all buffer frames are pinned
+    return BUFFEREXCEEDED;
 }
 
 const Status BufMgr::readPage(File *file, const int PageNo, Page *&page)
@@ -77,6 +139,7 @@ const Status BufMgr::readPage(File *file, const int PageNo, Page *&page)
 
 /**
  * @brief  Decrements the pinCnt of the frame containing (file, PageNo)
+ * @author Jeffrey
  * @note
  * @param  file: the file on disk
  * @param  PageNo: the page in the file
