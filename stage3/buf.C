@@ -78,7 +78,7 @@ const Status BufMgr::allocBuf(int &frame)
 {
     // Track the amount of time that clock goes through
     int loop = 0;
-    int initialHand = clockHand;
+    unsigned int initialHand = clockHand;
 
     while (loop < 2)
     {
@@ -179,8 +179,41 @@ const Status BufMgr::unPinPage(File *file, const int PageNo,
     }
 }
 
+/**
+ * @brief  Allocate an empty page in the file
+ * @author Jeffrey
+ * @note
+ * @param  *file: the file to allocate
+ * @param  &pageNo: the page number to allocate
+ * @param  *&page: the new page to allocate
+ * @retval OK if no errors occurred, UNIXERR if a Unix error occurred, BUFFEREXCEEDED if all buffer frames are pinned and HASHTBLERROR if a hash table error occurred.
+ */
 const Status BufMgr::allocPage(File *file, int &pageNo, Page *&page)
 {
+    // Allocate empty page in the specific file
+    if (file->allocatePage(pageNo) != OK)
+    {
+        return UNIXERR;
+    }
+
+    int frame = -1;
+    Status status;
+    // Obtain bufferpool frame
+    status = allocBuf(frame);
+    if (status != OK)
+        return status;
+    // Insert into hashtable
+    status = hashTable->insert(file, pageNo, frame);
+    if (status != OK)
+        return status;
+    // Call Set on frame
+    bufTable[frame].Set(file, pageNo);
+    // Init page
+    // TODO: may need to clean before init?
+    bufPool[frame].init(pageNo);
+    page = &(bufPool[frame]);
+
+    return OK;
 }
 
 const Status BufMgr::disposePage(File *file, const int pageNo)
