@@ -104,7 +104,7 @@ int main()
   {
     CALL(bufMgr->allocPage(file1, j[i], page));
     sprintf((char *)page, "test.1 Page %d %7.1f", j[i], (float)j[i]);
-    // CALL(bufMgr->unPinPage(file1, j[i], true));
+    CALL(bufMgr->unPinPage(file1, j[i], true));
     // bufMgr->printSelf();
   }
   cout << "Test passed" << endl

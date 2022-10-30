@@ -99,7 +99,7 @@ const Status BufMgr::allocBuf(int &frame)
             if (tempBuf->refbit)
             {
                 tempBuf->refbit = false;
-                // continue to next frame
+                // continue to next frame;
                 continue;
             }
             else
