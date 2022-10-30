@@ -69,7 +69,6 @@ BufMgr::~BufMgr()
 
 /**
  * @brief  Finds a free frame using the clock algorithm
- * @author Jeffrey
  * @note
  * @param  &frame: the frame to return
  * @retval BUFFEREXCEEDED if all buffer frames are pinned, UNIXERR if the call to the I/O layer returned an error when a dirty page was being written to disk and OK otherwise.
@@ -139,7 +138,6 @@ const Status BufMgr::readPage(File *file, const int PageNo, Page *&page)
 
 /**
  * @brief  Decrements the pinCnt of the frame containing (file, PageNo)
- * @author Jeffrey
  * @note
  * @param  file: the file on disk
  * @param  PageNo: the page in the file
@@ -181,7 +179,6 @@ const Status BufMgr::unPinPage(File *file, const int PageNo,
 
 /**
  * @brief  Allocate an empty page in the file
- * @author Jeffrey
  * @note
  * @param  *file: the file to allocate
  * @param  &pageNo: the page number to allocate
@@ -199,19 +196,28 @@ const Status BufMgr::allocPage(File *file, int &pageNo, Page *&page)
     int frame = -1;
     Status status;
     // Obtain bufferpool frame
+    // cout << "possible segfault at before allocBuf\n";
     status = allocBuf(frame);
+    // cout << "possible segfault at after allocBuf\n";
     if (status != OK)
         return status;
     // Insert into hashtable
+    // cout << "possible segfault at bebore hashInsert\n";
+
     status = hashTable->insert(file, pageNo, frame);
+    // cout << "possible segfault at after hashInsert\n";
     if (status != OK)
         return status;
     // Call Set on frame
+    // cout << "possible segfault at before Set\n";
     bufTable[frame].Set(file, pageNo);
+    // cout << "possible segfault at after Set\n";
     // Init page
     // TODO: may need to clean before init?
     bufPool[frame].init(pageNo);
+    // cout << "frame allocated: " << frame << endl;
     page = &(bufPool[frame]);
+    // cout << "possible segfault at frameNo\n\n";
 
     return OK;
 }
