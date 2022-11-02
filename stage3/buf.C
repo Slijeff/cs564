@@ -75,61 +75,43 @@ BufMgr::~BufMgr()
  */
 const Status BufMgr::allocBuf(int &frame)
 {
-    // Track the amount of time that clock goes through
-    int loop = 0;
-    unsigned int initialHand = clockHand;
 
-    while (loop < 2)
+    int clockHand = 0;
+    // Keep track of the number of frames we've checked
+    int framesChecked = 0;
+    while (true)
     {
-        advanceClock();
-        if (initialHand == clockHand)
+        framesChecked++;
+        // If we've checked all the frames, return BUFFEREXCEEDED
+        if (framesChecked == 2 * numBufs)
         {
-            loop++;
+            return BUFFEREXCEEDED;
         }
-        BufDesc *tempBuf = &(bufTable[clockHand]);
-        // If not valid
-        if (!tempBuf->valid)
+        clockHand = (clockHand + 1) % numBufs;
+        BufDesc *tmpbuf = &bufTable[clockHand];
+        if (tmpbuf->valid == false)
         {
             frame = clockHand;
             return OK;
         }
-        else
+        if (tmpbuf->refbit == true)
         {
-            // If reference bit set
-            if (tempBuf->refbit)
-            {
-                tempBuf->refbit = false;
-                // continue to next frame;
-                continue;
-            }
-            else
-            {
-                // If page is pinned, continue
-                if (tempBuf->pinCnt >= 1)
-                    continue;
-                else
-                {
-                    // If Dirty bit set, flush to disk
-                    // Remove from hash table done by flushFile()
-                    if (tempBuf->dirty)
-                    {
-                        if (flushFile(tempBuf->file) != OK)
-                            return UNIXERR;
-                        frame = clockHand;
-                        return OK;
-                    }
-                    else
-                    {
-                        frame = clockHand;
-                        return OK;
-                    }
-                }
-            }
+            tmpbuf->refbit = false;
+            continue;
         }
+        if (tmpbuf->pinCnt > 0)
+        {
+            continue;
+        }
+        if (tmpbuf->dirty == true)
+        {
+            tmpbuf->file->writePage(tmpbuf->pageNo, &(bufPool[clockHand]));
+        }
+        hashTable->remove(tmpbuf->file, tmpbuf->pageNo);
+        tmpbuf->Clear();
+        frame = clockHand;
+        return OK;
     }
-
-    // If after loop no return, all buffer frames are pinned
-    return BUFFEREXCEEDED;
 }
 
 /**
@@ -190,34 +172,17 @@ const Status BufMgr::readPage(File *file, const int PageNo, Page *&page)
 const Status BufMgr::unPinPage(File *file, const int PageNo,
                                const bool dirty)
 {
-    int frame = 0;
-    // Perform frame lookup
-    // If page is not in buffer pool hash table
-    if (hashTable->lookup(file, PageNo, frame) == HASHNOTFOUND)
-    {
-        return HASHNOTFOUND;
-    }
-    else
-    {
-        // Retrieve the corresponding BufDesc object
-        BufDesc *tempBuf = &bufTable[frame];
-        // if pin count is already 0
-        if (tempBuf->pinCnt == 0)
-        {
-            return PAGENOTPINNED;
-        }
-
-        // Sets the dirty bit
-        if (dirty)
-        {
-            tempBuf->dirty = true;
-        }
-
-        // decrement pinCount
-        tempBuf->pinCnt--;
-
-        return OK;
-    }
+    // Decrements the pinCnt of the frame containing (file, PageNo) and, if dirty == true, sets the dirty bit.
+    int frameNo;
+    Status status = hashTable->lookup(file, PageNo, frameNo);
+    if (status != OK)
+        return status;
+    if (bufTable[frameNo].pinCnt == 0)
+        return PAGENOTPINNED;
+    bufTable[frameNo].pinCnt--;
+    if (dirty)
+        bufTable[frameNo].dirty = true;
+    return OK;
 }
 
 /**
@@ -239,28 +204,19 @@ const Status BufMgr::allocPage(File *file, int &pageNo, Page *&page)
     int frame = -1;
     Status status;
     // Obtain bufferpool frame
-    // cout << "possible segfault at before allocBuf\n";
     status = allocBuf(frame);
-    // cout << "possible segfault at after allocBuf\n";
-    if (status != OK)
+    if (status != OK) {
         return status;
+    }
     // Insert into hashtable
-    // cout << "possible segfault at bebore hashInsert\n";
-
     status = hashTable->insert(file, pageNo, frame);
-    // cout << "possible segfault at after hashInsert\n";
     if (status != OK)
         return status;
     // Call Set on frame
-    // cout << "possible segfault at before Set\n";
     bufTable[frame].Set(file, pageNo);
-    // cout << "possible segfault at after Set\n";
     // Init page
-    // TODO: may need to clean before init?
     bufPool[frame].init(pageNo);
-    // cout << "frame allocated: " << frame << endl;
     page = &(bufPool[frame]);
-    // cout << "possible segfault at frameNo\n\n";
 
     return OK;
 }
