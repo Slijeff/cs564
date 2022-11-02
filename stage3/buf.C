@@ -132,8 +132,51 @@ const Status BufMgr::allocBuf(int &frame)
     return BUFFEREXCEEDED;
 }
 
+/**
+ * @brief  Read the page from disk into the buffer pool frame
+ * @note
+ * @param  *file: the file on disk
+ * @param  PageNo: the page in the file
+ * @param  *&page: the page to return
+ * @retval OK if no errors occurred, UNIXERR if a Unix error occurred, BUFFEREXCEEDED if all buffer frames are pinned, HASHTBLERROR if a hash table error occurred.
+ */
 const Status BufMgr::readPage(File *file, const int PageNo, Page *&page)
 {
+    // Check whether the page is in the buffer pool by invoking the lookup function
+    int frameNo;
+    Status status = hashTable->lookup(file, PageNo, frameNo);
+    // If the page is in the buffer pool, increment the pin count, set appropriate refbit and return the page
+    if (status == OK)
+    {
+        bufTable[frameNo].pinCnt++;
+        bufTable[frameNo].refbit = true;
+        page = &(bufPool[frameNo]);
+        return OK;
+    }
+    // If not in buffer pool
+    else
+    {
+        // Call allocBuf() to allocate a buffer frame
+        int frame;
+        status = allocBuf(frame);
+        if (status != OK)
+            return status;
+        // Read the page from disk into the buffer pool frame
+        status = file->readPage(PageNo, &(bufPool[frame]));
+        if (status != OK)
+            return status;
+        // Insert the page into the hash table
+        status = hashTable->insert(file, PageNo, frame);
+        if (status != OK)
+            return status;
+        // Set appropriate fields in the buffer descriptor
+        bufTable[frame].Set(file, PageNo);
+        // Set the page pointer to point to the page in the buffer pool
+        page = &(bufPool[frame]);
+        return OK;
+    }
+
+    return OK;
 }
 
 /**
