@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "(lldb) Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/testfile",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb"
+        },
+        {
+            "name": "Launch",
+            "request": "launch",
+            "program": "${workspaceRoot}/testfile",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [],
+            "externalConsole": false,
+            "type": "cppdbg"
+        }
+    ]
+}

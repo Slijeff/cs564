@@ -18,15 +18,24 @@ const Status createHeapFile(const string fileName)
         // file doesn't exist. First create it and allocate
         // an empty header page and data page.
         db.createFile(fileName);
-        Page temp;
-        bufMgr->allocPage(file, hdrPageNo, &temp);
-        hdrPage = (FileHdrPage *)temp;
+        db.openFile(fileName, file);
+
+        Page *temp = (Page *)hdrPage;
+        bufMgr->allocPage(file, hdrPageNo, temp);
+        // fill in the filename
+        strcpy(hdrPage->fileName, fileName.c_str());
         hdrPage->firstPage = 0;
-        hdrPage->firstPage = 0;
-        hdrPage->firstPage = 0;
-        bufMgr->allocPage(file, newPageNo, newPage);
+        hdrPage->lastPage = 0;
+        hdrPage->pageCnt = 0;
+        hdrPage->recCnt = 0;
+        status = bufMgr->allocPage(file, newPageNo, newPage);
+        if (status != OK)
+        {
+            return status;
+        }
         // Invoke its init() method to initialize the page
         newPage->init(newPageNo);
+
         // Finally, store the page number of the data page in firstPage and lastPage attributes of the FileHdrPage.
         hdrPage->firstPage = newPageNo;
         hdrPage->lastPage = newPageNo;

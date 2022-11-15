@@ -1,8 +1,18 @@
 {
-    "files.associations": {
-        "*.rmd": "rmarkdown",
-        "*.Rmd": "rmd",
-        "heapfile.C": "cpp",
-        "testfile.C": "cpp"
+  "files.associations": {
+    "*.rmd": "rmarkdown",
+    "*.Rmd": "rmd",
+    "heapfile.C": "cpp",
+    "testfile.C": "cpp",
+    "db.C": "cpp",
+    "page.C": "cpp",
+    "buf.C": "cpp"
+  },
+  "makefile.launchConfigurations": [
+    {
+      "cwd": "/afs/cs.wisc.edu/u/j/h/jhui/private/cs564/stage4",
+      "binaryPath": "/afs/cs.wisc.edu/u/j/h/jhui/private/cs564/stage4/testfile",
+      "binaryArgs": []
     }
+  ]
 }
