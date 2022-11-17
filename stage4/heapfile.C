@@ -386,6 +386,24 @@ InsertFileScan::InsertFileScan(const string &name,
 {
     // Do nothing. Heapfile constructor will bread the header page and the first
     //  data page of the file into the buffer pool
+
+    // Heapfile constructor will read the header page and the first
+    // data page of the file into the buffer pool
+    // If the first data page of the file is not the last data page of the file
+    // unpin the current page and read the last page
+    if ((curPage != NULL) && (curPageNo != headerPage->lastPage))
+    {
+        status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
+        if (status != OK)
+            cerr << "error in unpin of data page\n";
+
+        curPageNo = headerPage->lastPage;
+        status = bufMgr->readPage(filePtr, curPageNo, curPage);
+        if (status != OK)
+            cerr << "error in readPage \n";
+
+        curDirtyFlag = false;
+    }
 }
 
 InsertFileScan::~InsertFileScan()
