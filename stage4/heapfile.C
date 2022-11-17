@@ -66,6 +66,22 @@ HeapFile::HeapFile(const string &fileName, Status &returnStatus)
     // open the file and read in the header page and the first data page
     if ((status = db.openFile(fileName, filePtr)) == OK)
     {
+        // reads and pins the header page for the file in the buffer pool
+        int header_pg_num;
+        filePtr->getFirstPage(header_pg_num);
+        // initializing the private data members
+        headerPageNo = header_pg_num;
+        bufMgr->readPage(filePtr, header_pg_num, pagePtr);
+        headerPage = (FileHdrPage *)pagePtr;
+        hdrDirtyFlag = false;
+        // read and pin the first page of the file into the buffer pool
+        int first_pg_num = headerPage->firstPage;
+        bufMgr->readPage(filePtr, first_pg_num, pagePtr);
+        curPage = (Page *)pagePtr;
+        curPageNo = first_pg_num;
+        curDirtyFlag = false;
+
+        curRec = NULLRID;
     }
     else
     {
