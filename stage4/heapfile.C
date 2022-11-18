@@ -63,7 +63,6 @@ HeapFile::HeapFile(const string &fileName, Status &returnStatus)
 
     cout << "opening file " << fileName << endl;
 
-    // NOTE - INIT HeapFile members from file
     //  open the file and read in the header page and the first data page
     if ((status = db.openFile(fileName, filePtr)) == OK)
     {
@@ -72,7 +71,6 @@ HeapFile::HeapFile(const string &fileName, Status &returnStatus)
         filePtr->getFirstPage(header_pg_num);
         // initializing the private data members
         headerPageNo = header_pg_num;
-        // REVIEW: checked filePtr and headerPageNo is correct, but pagePtr reads nothing
         bufMgr->readPage(filePtr, header_pg_num, pagePtr);
         headerPage = (FileHdrPage *)pagePtr;
         hdrDirtyFlag = false;

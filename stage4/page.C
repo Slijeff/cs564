@@ -9,7 +9,6 @@ using namespace std;
 void Page::init(int pageNo)
 {
 	nextPage = -1;
-	cout << "passed" << endl;
 
 	slotCnt = 0; // no slots in use
 	curPage = pageNo;
