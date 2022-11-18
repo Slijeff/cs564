@@ -142,41 +142,44 @@ const Status HeapFile::getRecord(const RID &rid, Record &rec)
 {
     Status status;
 
-    status = curPage->getRecord(rid, rec);
-    if (status == OK)
+    if (rid.pageNo == curPageNo)
     {
-        curRec = rid; // REVIEW : not sure if this is needed
-        return OK;
-    }
-    else
-    {
-        // unpin the current page
-        status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
-        if (status != OK)
-            return status;
-        curPage = NULL;
-        curPageNo = 0;
-        curDirtyFlag = false;
-        curRec = NULLRID;
-
-        // read the page containing the record into the buffer pool
-        int pgNum = rid.pageNo;
-        Page *pagePtr;
-        status = bufMgr->readPage(filePtr, pgNum, pagePtr);
-        if (status != OK)
-            return status;
-        curPage = pagePtr;
-        curPageNo = pgNum;
-        curDirtyFlag = false;
-
-        // get the record
+        // the record is on the currently pinned page
+        // so just get the record from the page
         status = curPage->getRecord(rid, rec);
         if (status != OK)
             return status;
         curRec = rid;
-        return OK;
     }
+    else
+    {
+        // the record is not on the currently pinned page
+        // so unpin the current page and read in the page
+        // containing the record
+        status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
+        if (status != OK)
+            return status;
+        curPage = nullptr;
+        curPageNo = 0;
+        curDirtyFlag = false;
 
+        // read the page containing the record into the buffer pool
+        // and pin it
+        Page *pagePtr;
+        status = bufMgr->readPage(filePtr, rid.pageNo, pagePtr);
+        if (status != OK)
+            return status;
+        curPage = pagePtr;
+        curPageNo = rid.pageNo;
+        curDirtyFlag = false;
+
+        // get the record from the page
+        status = curPage->getRecord(rid, rec);
+        if (status != OK)
+            return status;
+        curRec = rid;
+    }
+    return OK;
     // cout<< "getRecord. record (" << rid.pageNo << "." << rid.slotNo << ")" << endl;
 }
 
@@ -478,6 +481,7 @@ const Status InsertFileScan::insertRecord(const Record &rec, RID &outRid)
             curDirtyFlag = true;
             headerPage->recCnt++;
             headerPage->lastPage = newPageNo;
+            headerPage->pageCnt++;
             hdrDirtyFlag = true;
         }
     }
