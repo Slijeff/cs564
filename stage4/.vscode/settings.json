@@ -6,7 +6,11 @@
     "testfile.C": "cpp",
     "db.C": "cpp",
     "page.C": "cpp",
-    "buf.C": "cpp"
+    "buf.C": "cpp",
+    "*.tcc": "cpp",
+    "unordered_map": "cpp",
+    "vector": "cpp",
+    "ostream": "cpp"
   },
   "makefile.launchConfigurations": [
     {
