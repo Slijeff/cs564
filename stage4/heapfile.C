@@ -87,12 +87,14 @@ HeapFile::HeapFile(const string &fileName, Status &returnStatus)
         if (status != OK)
         {
             returnStatus = status;
+            return;
         }
         // initializing the private data members
         status = bufMgr->readPage(filePtr, headerPageNo, pagePtr);
         if (status != OK)
         {
             returnStatus = status;
+            return;
         }
         headerPage = (FileHdrPage *)pagePtr;
         hdrDirtyFlag = false;
@@ -103,6 +105,7 @@ HeapFile::HeapFile(const string &fileName, Status &returnStatus)
         if (status != OK)
         {
             returnStatus = status;
+            return;
         }
         curDirtyFlag = false;
         curRec = NULLRID;
@@ -640,9 +643,7 @@ const Status InsertFileScan::insertRecord(const Record &rec, RID &outRid)
         }
 
         // bookkeeping
-        curDirtyFlag = true;
         headerPage->recCnt++;
-        hdrDirtyFlag = true;
         outRid = rid;
         return OK;
     }
