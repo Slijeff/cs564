@@ -87,28 +87,24 @@ HeapFile::HeapFile(const string &fileName, Status &returnStatus)
         if (status != OK)
         {
             returnStatus = status;
-            return;
         }
         // initializing the private data members
         status = bufMgr->readPage(filePtr, headerPageNo, pagePtr);
         if (status != OK)
         {
             returnStatus = status;
-            return;
         }
         headerPage = (FileHdrPage *)pagePtr;
         hdrDirtyFlag = false;
 
         // read and pin the first page of the file into the buffer pool
         curPageNo = headerPage->firstPage;
-        status = bufMgr->readPage(filePtr, headerPage->firstPage, pagePtr);
+        status = bufMgr->readPage(filePtr, headerPage->firstPage, curPage);
         if (status != OK)
         {
             returnStatus = status;
-            return;
         }
         curDirtyFlag = false;
-
         curRec = NULLRID;
         returnStatus = OK;
     }
