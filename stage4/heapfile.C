@@ -66,19 +66,36 @@ HeapFile::HeapFile(const string &fileName, Status &returnStatus)
     Status status;
     Page *pagePtr;
 
-    cout << "opening file " << fileName << endl;
+    // cout << "opening file " << fileName << endl;
 
     //  open the file and read in the header page and the first data page
     if ((status = db.openFile(fileName, filePtr)) == OK)
     {
         // reads and pins the header page for the file in the buffer pool
-        filePtr->getFirstPage(headerPageNo);
+        status = filePtr->getFirstPage(headerPageNo);
+        if (status != OK)
+        {
+            returnStatus = status;
+            return;
+        }
         // initializing the private data members
-        bufMgr->readPage(filePtr, headerPageNo, pagePtr);
+        status = bufMgr->readPage(filePtr, headerPageNo, pagePtr);
+        if (status != OK)
+        {
+            returnStatus = status;
+            return;
+        }
         headerPage = (FileHdrPage *)pagePtr;
         hdrDirtyFlag = false;
+
         // read and pin the first page of the file into the buffer pool
-        bufMgr->readPage(filePtr, headerPage->firstPage, pagePtr);
+        curPageNo = headerPage->firstPage;
+        status = bufMgr->readPage(filePtr, headerPage->firstPage, pagePtr);
+        if (status != OK)
+        {
+            returnStatus = status;
+            return;
+        }
         curDirtyFlag = false;
 
         curRec = NULLRID;
@@ -546,107 +563,72 @@ const Status InsertFileScan::insertRecord(const Record &rec, RID &outRid)
         // will never fit on a page, so don't even bother looking
         return INVALIDRECLEN;
     }
-    // check if curPage is NULL
-    if (curPage != NULL)
-    {
-        // check if the record can fit on the current page
-        if (curPage->getFreeSpace() >= rec.length)
-        {
-            // insert the record on the current page
-            status = curPage->insertRecord(rec, outRid);
-            if (status != OK)
-                return status;
-            // bookkeeping
-            curDirtyFlag = true;
-            headerPage->recCnt++;
-            hdrDirtyFlag = true;
-        }
-        // if doesn't fit, unpin the current page
-        else
-        {
-            status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
-            if (status != OK)
-                return status;
-            // bookkeeping for current page
-            // curPage = NULL;
-            curPageNo = 0;
-            curDirtyFlag = false;
 
-            // create a new page
-            status = bufMgr->allocPage(filePtr, newPageNo, newPage);
-            if (status != OK)
-                return status;
-            // initialize the new page
-            newPage->init(newPageNo);
-            // bookkeeping for new page
-            curPage->setNextPage(newPageNo);
-            curPage = newPage;
-            curPageNo = newPageNo;
-            // insert the record on the new page
-            status = curPage->insertRecord(rec, outRid);
-            if (status != OK)
-                return status;
-            // bookkeeping
-            curDirtyFlag = true;
-            headerPage->recCnt++;
-            headerPage->lastPage = newPageNo;
-            headerPage->pageCnt++;
-            hdrDirtyFlag = true;
+    // if no working page
+    if (curPage == NULL)
+    {
+        curPageNo = headerPage->lastPage;
+        status = bufMgr->readPage(filePtr, curPageNo, curPage);
+        if (status != OK)
+        {
+            return status;
         }
     }
-    // if curPage is NULL, make the last page the current page
+
+    // attemp insert
+    status = curPage->insertRecord(rec, rid);
+    if (status == NOSPACE)
+    {
+        // current page full
+        status = bufMgr->allocPage(filePtr, newPageNo, newPage);
+        if (status != OK)
+        {
+            return status;
+        }
+        newPage->init(newPageNo);
+        newPage->setNextPage(-1);
+
+        // bookkeeping
+        headerPage->lastPage = newPageNo;
+        headerPage->pageCnt++;
+        hdrDirtyFlag = true;
+        curDirtyFlag = true;
+        curPage->setNextPage(newPageNo);
+
+        // unPin old curPage
+        status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
+        if (status != OK)
+        {
+            curPage = NULL;
+            curPageNo = -1;
+            curDirtyFlag = false;
+            return status;
+        }
+
+        curPage = newPage;
+        curPageNo = newPageNo;
+        status = curPage->insertRecord(rec, rid);
+        if (status != OK)
+        {
+            return status;
+        }
+
+        // bookkeeping
+        curDirtyFlag = true;
+        headerPage->recCnt++;
+        hdrDirtyFlag = true;
+        outRid = rid;
+        return OK;
+    }
     else
     {
-        // read the last page of the file
-        status = bufMgr->readPage(filePtr, headerPage->lastPage, curPage);
-        if (status != OK)
-            return status;
-        // bookkeeping for current page
-        curPageNo = headerPage->lastPage;
-        curDirtyFlag = false;
-        // check if the record can fit on the current page
-        if (curPage->getFreeSpace() >= rec.length)
-        {
-            // insert the record on the current page
-            status = curPage->insertRecord(rec, outRid);
-            if (status != OK)
-                return status;
-            // bookkeeping
-            curDirtyFlag = true;
-            headerPage->recCnt++;
-            hdrDirtyFlag = true;
-        }
-        // if doesn't fit, unpin the current page
-        else
-        {
-            status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
-            if (status != OK)
-                return status;
-            // bookkeeping for current page
-            // curPage = NULL;
-            curPageNo = 0;
-            curDirtyFlag = false;
-
-            // create a new page
-            status = bufMgr->allocPage(filePtr, newPageNo, newPage);
-            if (status != OK)
-                return status;
-            // initialize the new page
-            newPage->init(newPageNo);
-            // bookkeeping for new page
-            curPage->setNextPage(newPageNo);
-            curPage = newPage;
-            curPageNo = newPageNo;
-            // insert the record on the new page
-            status = curPage->insertRecord(rec, outRid);
-            if (status != OK)
-                return status;
-            // bookkeeping
-            curDirtyFlag = true;
-            headerPage->recCnt++;
-            headerPage->lastPage = newPageNo;
-            hdrDirtyFlag = true;
-        }
+        // there is space to insert
+        outRid = rid;
+        // bookkeeping
+        headerPage->recCnt++;
+        hdrDirtyFlag = true;
+        curDirtyFlag = true;
+        return OK;
     }
     return OK;
 }
