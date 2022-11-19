@@ -1,7 +1,12 @@
 #include "heapfile.h"
 #include "error.h"
 
-// routine to create a heapfile
+/**
+ * @brief  routine to create a heapfile
+ * @note
+ * @param  fileName: the name of the file to be created
+ * @retval status
+ */
 const Status createHeapFile(const string fileName)
 {
     File *file;
@@ -60,7 +65,13 @@ const Status destroyHeapFile(const string fileName)
     return (db.destroyFile(fileName));
 }
 
-// constructor opens the underlying file
+/**
+ * @brief  constructor opens the underlying file
+ * @note
+ * @param  &fileName: the file to open
+ * @param  &returnStatus: status
+ * @retval
+ */
 HeapFile::HeapFile(const string &fileName, Status &returnStatus)
 {
     Status status;
@@ -155,6 +166,13 @@ const int HeapFile::getRecCnt() const
 // is unpinned and the required page is read into the buffer pool
 // and pinned.  returns a pointer to the record via the rec parameter
 
+/**
+ * @brief  retrieve an arbitrary record from a file.
+ * @note
+ * @param  &rid: the record id
+ * @param  &rec: the record itself to return
+ * @retval
+ */
 const Status HeapFile::getRecord(const RID &rid, Record &rec)
 {
     Status status;
@@ -313,6 +331,12 @@ const Status HeapFileScan::resetScan()
     return OK;
 }
 
+/**
+ * @brief  return the next rid that satisfied the predicate
+ * @note
+ * @param  &outRid: the value to return
+ * @retval
+ */
 const Status HeapFileScan::scanNext(RID &outRid)
 {
     Status status = OK;
@@ -549,7 +573,13 @@ InsertFileScan::~InsertFileScan()
     }
 }
 
-// Insert a record into the file
+/**
+ * @brief  Insert a record into the file
+ * @note
+ * @param  &rec: the record provided
+ * @param  &outRid: the rid inserted
+ * @retval
+ */
 const Status InsertFileScan::insertRecord(const Record &rec, RID &outRid)
 {
     Page *newPage;
