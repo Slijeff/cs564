@@ -1,0 +1,12 @@
+{
+  "files.associations": {
+    "*.rmd": "rmarkdown",
+    "*.Rmd": "rmd",
+    "buf.C": "cpp",
+    "heapfile.C": "cpp",
+    "dbdestroy.C": "cpp",
+    "error.C": "cpp",
+    "catalog.C": "cpp",
+    "select.C": "cpp"
+  }
+}
