@@ -8,7 +8,11 @@
     "bufHash.C": "cpp",
     "interp.C": "cpp",
     "join.C": "cpp",
-    "minirel.C": "cpp"
+    "minirel.C": "cpp",
+    "heapfile.C": "cpp",
+    "catalog.C": "cpp",
+    "print.C": "cpp",
+    "help.C": "cpp"
   },
   "makefile.launchConfigurations": [
     {

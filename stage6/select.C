@@ -51,6 +51,11 @@ const Status QU_Select(const string &result,
 		float temp = atof(attrValue);
 		filter = (char *)(&temp);
 	}
+	else
+	{
+		// No filtering needed
+		filter = NULL;
+	}
 
 	// Get info for projections
 	int record_length = 0;
