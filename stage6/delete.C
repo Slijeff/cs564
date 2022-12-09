@@ -24,7 +24,6 @@ const Status QU_Delete(const string &relation,
 	// No attribute name specified, delete all records
 	if (attrName.empty())
 	{
-		// REVIEW: type?
 		status = hfs->startScan(0, 0, type, NULL, op);
 		if (status != OK)
 			return status;
@@ -50,18 +49,19 @@ const Status QU_Delete(const string &relation,
 
 	// Get filter value
 	const char *filter;
+	int temp;
 	if (type == STRING)
 	{
 		filter = attrValue;
 	}
 	else if (type == INTEGER)
 	{
-		int temp = atoi(attrValue);
+		temp = atoi(attrValue);
 		filter = (char *)(&temp);
 	}
 	else if (type == FLOAT)
 	{
-		float temp = atof(attrValue);
+		temp = atof(attrValue);
 		filter = (char *)(&temp);
 	}
 	else
