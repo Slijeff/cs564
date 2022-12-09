@@ -37,19 +37,21 @@ const Status QU_Select(const string &result,
 			return status;
 	}
 	const char *filter;
+	int itemp;
+	float ftemp;
 	if ((Datatype)attrDesc.attrType == STRING)
 	{
 		filter = attrValue;
 	}
 	else if ((Datatype)attrDesc.attrType == INTEGER)
 	{
-		int temp = atoi(attrValue);
-		filter = (char *)(&temp);
+		itemp = atoi(attrValue);
+		filter = (char *)(&itemp);
 	}
 	else if ((Datatype)attrDesc.attrType == FLOAT)
 	{
-		float temp = atof(attrValue);
-		filter = (char *)(&temp);
+		ftemp = atof(attrValue);
+		filter = (char *)(&ftemp);
 	}
 	else
 	{

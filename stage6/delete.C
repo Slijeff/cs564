@@ -49,20 +49,21 @@ const Status QU_Delete(const string &relation,
 
 	// Get filter value
 	const char *filter;
-	int temp;
+	int itemp;
+	float ftemp;
 	if (type == STRING)
 	{
 		filter = attrValue;
 	}
 	else if (type == INTEGER)
 	{
-		temp = atoi(attrValue);
-		filter = (char *)(&temp);
+		itemp = atoi(attrValue);
+		filter = (char *)(&itemp);
 	}
 	else if (type == FLOAT)
 	{
-		temp = atof(attrValue);
-		filter = (char *)(&temp);
+		ftemp = atof(attrValue);
+		filter = (char *)(&ftemp);
 	}
 	else
 	{
