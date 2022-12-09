@@ -20,6 +20,28 @@ const Status QU_Delete(const string &relation,
 	HeapFileScan *hfs = new HeapFileScan(relation, status);
 	if (status != OK)
 		return status;
+
+	// No attribute name specified, delete all records
+	if (attrName.empty())
+	{
+		// REVIEW: type?
+		status = hfs->startScan(0, 0, type, NULL, op);
+		if (status != OK)
+			return status;
+		RID rid;
+		while (hfs->scanNext(rid) == OK)
+		{
+			status = hfs->deleteRecord();
+			if (status != OK)
+				return status;
+		}
+		status = hfs->endScan();
+		if (status != OK)
+			return status;
+		delete hfs;
+		return OK;
+	}
+
 	// Get attribute info
 	AttrDesc attrInfo;
 	status = attrCat->getInfo(relation, attrName, attrInfo);
@@ -53,13 +75,8 @@ const Status QU_Delete(const string &relation,
 	if (status != OK)
 		return status;
 	RID rid;
-	Record rec;
 	while (hfs->scanNext(rid) == OK)
 	{
-		status = hfs->getRecord(rec);
-		if (status != OK)
-			return status;
-
 		status = hfs->deleteRecord();
 		if (status != OK)
 			return status;
