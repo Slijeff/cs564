@@ -1,18 +1,21 @@
 {
-    "files.associations": {
-        "*.rmd": "rmarkdown",
-        "*.Rmd": "rmd",
-        "select.C": "cpp",
-        "dbcreate.C": "cpp",
-        "insert.C": "cpp",
-        "bufHash.C": "cpp",
-        "interp.C": "cpp"
-    },
-    "makefile.launchConfigurations": [
-        {
-            "cwd": "/afs/cs.wisc.edu/u/j/h/jhui/private/cs564/stage6",
-            "binaryPath": "/afs/cs.wisc.edu/u/j/h/jhui/private/cs564/stage6/minirel",
-            "binaryArgs": ["testdb"]
-        }
-    ]
+  "files.associations": {
+    "*.rmd": "rmarkdown",
+    "*.Rmd": "rmd",
+    "select.C": "cpp",
+    "dbcreate.C": "cpp",
+    "insert.C": "cpp",
+    "bufHash.C": "cpp",
+    "interp.C": "cpp",
+    "join.C": "cpp",
+    "minirel.C": "cpp"
+  },
+  "makefile.launchConfigurations": [
+    {
+      "cwd": "/afs/cs.wisc.edu/u/j/h/jhui/private/cs564/stage6",
+      "binaryPath": "/afs/cs.wisc.edu/u/j/h/jhui/private/cs564/stage6/minirel",
+      "binaryArgs": ["testdb"]
+    }
+  ],
+  "C_Cpp.errorSquiggles": "Disabled"
 }
