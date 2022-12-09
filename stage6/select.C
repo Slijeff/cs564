@@ -111,6 +111,7 @@ const Status ScanSelect(const string &result,
 	int offset = 0;
 	while (hfs->scanNext(scanRid) == OK)
 	{
+
 		status = hfs->getRecord(scanRec);
 		if (status != OK)
 			return status;
@@ -120,6 +121,7 @@ const Status ScanSelect(const string &result,
 			memcpy((char *)insertRec.data + offset, (char *)scanRec.data + projNames[i].attrOffset, projNames[i].attrLen);
 			offset += projNames[i].attrLen;
 		}
+		offset = 0;
 		status = ifs->insertRecord(insertRec, insertRid);
 		if (status != OK)
 			return status;
